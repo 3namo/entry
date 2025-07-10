@@ -46,7 +46,7 @@
     .add-new-btn { background-color: var(--accent-color); color: white; }
     .cancel-add-btn { background-color: #6c757d; color: white; }
 
-    // ステータス管理モーダル 
+    /* ▼▼▼ ステータス管理モーダル ▼▼▼ */
     .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
     .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; }
     .modal-content h3 { margin-top: 0; }
@@ -195,7 +195,7 @@
       sortByNameBtn.addEventListener('click', () => { companies.sort((a,b) => a.name.localeCompare(b.name, 'ja')); renderCompanies(); });
       sortByDateBtn.addEventListener('click', () => { companies.sort((a,b) => { if (!a.nextDate) return 1; if (!b.nextDate) return -1; return new Date(a.nextDate) - new Date(b.nextDate); }); renderCompanies(); });
 
-      // ステータス管理（並び替え機能を含む）
+      // --- ▼▼▼ ステータス管理（並び替え機能を含む） ▼▼▼ ---
       manageStatusBtn.addEventListener('click', () => { renderStatusOptionsInModal(); modal.style.display = 'flex'; });
       closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
       modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
@@ -236,6 +236,7 @@
               renderCompanies();
           }
       });
+      // --- ▲▲▲ 変更点 ▲▲▲ ---
 
       renderCompanies();
     });
