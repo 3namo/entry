@@ -127,14 +127,50 @@
     document.addEventListener('DOMContentLoaded', () => {
       const companyList = document.getElementById('company-list');
       const archivedList = document.getElementById('archived-list');
-      // (中略... 他の要素取得は変更なし)
-      const DATA_KEY = 'jobAppData_v8'; // 念のためバージョンアップ
+      const addCompanyBtn = document.getElementById('add-company-btn');
+      const sortByNameBtn = document.getElementById('sort-by-name');
+      const sortByDateBtn = document.getElementById('sort-by-date');
+      const addCompanyForm = document.getElementById('add-company-form');
+      const newCompanyNameInput = document.getElementById('new-company-name');
+      const cancelAddBtn = document.getElementById('cancel-add-btn');
+      const manageStatusBtn = document.getElementById('manage-status-btn');
+      const modal = document.getElementById('manage-status-modal');
+      const closeModalBtn = document.getElementById('close-modal-btn');
+      const statusOptionsList = document.getElementById('status-options-list');
+      const addStatusForm = document.getElementById('add-status-form');
+      const newStatusNameInput = document.getElementById('new-status-name');
+      const searchBar = document.getElementById('search-bar');
+      const archiveSection = document.getElementById('archive-section');
+      const toggleArchiveBtn = document.getElementById('toggle-archive-btn');
+      const exportBtn = document.getElementById('export-data-btn');
+      const importBtn = document.getElementById('import-data-btn');
+      const importFileInput = document.getElementById('import-file-input');
+      const toastContainer = document.getElementById('toast-container');
+
+      const DATA_KEY = 'jobAppData_v8';
       const defaultStatusOptions = ["未エントリー", "エントリー済み", "書類選考", "ウィンター通過", "サマー通過", "Webテスト", "1次面接前", "1次面接結果待ち", "1次面接通過", "2次面接前", "2次面接結果待ち", "2次面接通過", "最終面接前", "最終面接結果待ち", "内々定", "内定", "お祈り"];
       const statusColors = {"内々定": "#28a745", "内定": "#28a745", "最終面接結果待ち": "#17a2b8", "最終面接前": "#17a2b8", "2次面接通過": "#007bff", "1次面接通過": "#007bff", "お祈り": "#6c757d", "書類選考": "#ffc107"};
+
       let appData = { companies: [], statusOptions: defaultStatusOptions };
 
-      // (中略... loadData, saveData, render, showToastなどのヘルパー関数は変更なし)
-      
+      const loadData = () => {
+          const savedData = localStorage.getItem(DATA_KEY);
+          if (savedData) {
+              appData = JSON.parse(savedData);
+              // 古いデータ形式にstatusOptionsがない場合、デフォルト値を設定
+              if (!appData.statusOptions) {
+                  appData.statusOptions = defaultStatusOptions;
+              }
+          }
+      };
+      const saveData = () => localStorage.setItem(DATA_KEY, JSON.stringify(appData));
+
+      const render = () => {
+        const searchTerm = searchBar.value.toLowerCase();
+        renderCompanyList(companyList, appData.companies.filter(c => !c.archived), searchTerm);
+        renderCompanyList(archivedList, appData.companies.filter(c => c.archived), searchTerm, true);
+      };
+
       const renderCompanyList = (listElement, companies, searchTerm, isArchived = false) => {
         const filteredCompanies = companies.filter(c => c.name.toLowerCase().includes(searchTerm));
         listElement.innerHTML = filteredCompanies.length === 0 ? `<p style="text-align:center; color:#888;">${searchTerm ? '該当なし' : '企業なし'}</p>` : '';
@@ -146,8 +182,6 @@
           companyEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
           const optionsHtml = appData.statusOptions.map(o => `<option value="${o}" ${company.status === o ? 'selected' : ''}>${o}</option>`).join('');
           const archiveMenuText = isArchived ? 'リストに戻す' : 'アーカイブ';
-          
-          // ▼▼▼ 変更点：編集ボタンをHTMLに追加 ▼▼▼
           companyEl.innerHTML = `
             <summary class="item-summary">
               <span class="company-name">${company.name}</span>
@@ -173,11 +207,41 @@
         });
       };
       
-      const renderStatusOptionsInModal = () => { /* ... 変更なし ... */ };
-      const showToast = (message) => { /* ... 変更なし ... */ };
-      function handleCompanyDataChange(e) { /* ... 変更なし ... */ }
+      const renderStatusOptionsInModal = () => {
+          statusOptionsList.innerHTML = '';
+          appData.statusOptions.forEach(name => {
+              const li = document.createElement('li');
+              li.innerHTML = `<span>${name}</span><button data-name="${name}" class="delete-btn">&times;</button>`;
+              statusOptionsList.appendChild(li);
+          });
+      };
 
-      // ▼▼▼ 変更点：クリックイベントの処理を修正 ▼▼▼
+      const showToast = (message) => {
+          const toast = document.createElement('div');
+          toast.className = 'toast';
+          toast.textContent = message;
+          toastContainer.appendChild(toast);
+          setTimeout(() => { toast.remove(); }, 3000);
+      };
+
+      const handleCompanyDataChange = (e) => {
+          const itemEl = e.target.closest('.company-item');
+          if (!itemEl) return;
+          const company = appData.companies.find(c => c.id == itemEl.dataset.id);
+          const propMap = {'status-select':'status', 'login-id':'loginId', 'next-date':'nextDate', 'url-input':'url', 'memo-input':'memo'};
+          for (const [cls, prop] of Object.entries(propMap)) {
+              if (e.target.classList.contains(cls)) {
+                  company[prop] = e.target.value;
+                  if(cls === 'status-select') itemEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
+                  if(cls === 'url-input') itemEl.querySelector('.url-link').href = e.target.value || '#';
+                  break;
+              }
+          }
+          saveData();
+      };
+      companyList.addEventListener('change', handleCompanyDataChange);
+      archivedList.addEventListener('change', handleCompanyDataChange);
+
       const handleListClick = (e) => {
           const editBtn = e.target.closest('.edit-name-btn');
           const kebabBtn = e.target.closest('.kebab-btn');
@@ -185,7 +249,7 @@
           const menuItemDelete = e.target.closest('.menu-item-delete');
 
           if (editBtn) {
-              e.preventDefault(); // summaryの開閉をキャンセル
+              e.preventDefault();
               const itemEl = e.target.closest('.company-item');
               const nameSpan = itemEl.querySelector('.company-name');
               const currentName = nameSpan.textContent;
@@ -240,10 +304,114 @@
               document.querySelectorAll('.kebab-menu.show').forEach(menu => menu.classList.remove('show'));
           }
       });
-      // ▲▲▲ 変更点 ▲▲▲
 
-      // (中略... 以降のコードは変更なし)
-      // JAVASCRIPT IS TRUNCATED. THE FULL CODE WILL BE PROVIDED IN THE RESPONSE.
+      const addCompanyFormSubmit = (e) => {
+        e.preventDefault();
+        const companyName = newCompanyNameInput.value.trim();
+        if (companyName) {
+          appData.companies.push({ 
+              id: Date.now(), 
+              name: companyName, 
+              loginId: '', 
+              status: appData.statusOptions[0], 
+              url: '', 
+              nextDate: '', 
+              memo: '', 
+              archived: false
+          });
+          saveData();
+          render();
+          hideAddForm();
+        }
+      };
+      addCompanyForm.addEventListener('submit', addCompanyFormSubmit);
+      
+      const showAddForm = () => { addCompanyBtn.style.display = 'none'; addCompanyForm.style.display = 'flex'; newCompanyNameInput.focus(); };
+      const hideAddForm = () => { addCompanyBtn.style.display = 'inline-block'; addCompanyForm.style.display = 'none'; newCompanyNameInput.value = ''; };
+      addCompanyBtn.addEventListener('click', showAddForm);
+      cancelAddBtn.addEventListener('click', hideAddForm);
+
+      sortByNameBtn.addEventListener('click', () => { appData.companies.sort((a,b) => a.name.localeCompare(b.name, 'ja')); render(); });
+      sortByDateBtn.addEventListener('click', () => { appData.companies.sort((a,b) => { if (!a.nextDate) return 1; if (!b.nextDate) return -1; return new Date(a.nextDate) - new Date(b.nextDate); }); render(); });
+
+      manageStatusBtn.addEventListener('click', () => { renderStatusOptionsInModal(); modal.style.display = 'flex'; });
+      closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+      modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
+      addStatusForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const newName = newStatusNameInput.value.trim();
+          if (newName && !appData.statusOptions.includes(newName)) {
+              appData.statusOptions.push(newName);
+              saveData();
+              renderStatusOptionsInModal();
+              render();
+              newStatusNameInput.value = '';
+          }
+      });
+      statusOptionsList.addEventListener('click', (e) => {
+          if (e.target.classList.contains('delete-btn')) {
+              const statusToDelete = e.target.dataset.name;
+              if (confirm(`ステータス「${statusToDelete}」を削除しますか？`)) {
+                  appData.statusOptions = appData.statusOptions.filter(name => name !== statusToDelete);
+                  saveData();
+                  renderStatusOptionsInModal();
+                  render();
+              }
+          }
+      });
+      
+      new Sortable(statusOptionsList, {
+          animation: 150,
+          onEnd: (evt) => {
+              const [movedItem] = appData.statusOptions.splice(evt.oldIndex, 1);
+              appData.statusOptions.splice(evt.newIndex, 0, movedItem);
+              saveData();
+              render();
+          }
+      });
+      
+      searchBar.addEventListener('input', render);
+      toggleArchiveBtn.addEventListener('click', () => {
+          const isHidden = archiveSection.style.display === 'none';
+          archiveSection.style.display = isHidden ? 'block' : 'none';
+          toggleArchiveBtn.textContent = isHidden ? 'アーカイブを隠す' : 'アーカイブ済みリストを表示';
+      });
+
+      exportBtn.addEventListener('click', () => {
+          const dataStr = JSON.stringify(appData, null, 2);
+          const blob = new Blob([dataStr], {type: 'application/json'});
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `job-applications-backup-${new Date().toISOString().slice(0,10)}.json`;
+          a.click();
+          URL.revokeObjectURL(url);
+      });
+
+      importBtn.addEventListener('click', () => importFileInput.click());
+      importFileInput.addEventListener('change', (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+              try {
+                  const importedData = JSON.parse(event.target.result);
+                  if (confirm('現在のデータをインポートしたデータで上書きしますか？この操作は元に戻せません。')) {
+                      appData = importedData;
+                      saveData();
+                      render();
+                      alert('データのインポートが完了しました。');
+                  }
+              } catch (err) {
+                  alert('ファイルの読み込みに失敗しました。有効なJSONファイルを選択してください。');
+              }
+          };
+          reader.readAsText(file);
+          importFileInput.value = '';
+      });
+
+      loadData();
+      render();
     });
   </script>
 </body>
