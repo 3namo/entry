@@ -10,68 +10,324 @@
             --border-color: #ddd; --bg-color: #f4f7f6; --bg-alt-color: #fff;
             --text-color: #333; --accent-color: #007bff; --danger-color: #e74c3c;
         }
-        body { font-family: 'Segoe UI', Meiryo, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); }
-        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-        h1, h2 { text-align: center; color: #444; }
-        h2 { font-size: 1.2rem; margin-top: 2.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
-        .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0; flex-wrap: wrap; gap: 1rem; }
-        .search-bar { flex-grow: 1; min-width: 200px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 20px; }
-        .toolbar-group { display: flex; gap: 0.5rem; }
+        body { 
+            font-family: 'Segoe UI', Meiryo, sans-serif; 
+            margin: 0; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            line-height: 1.6;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 2rem auto; 
+            padding: 0 1rem; 
+            box-sizing: border-box;
+        }
+        h1, h2 { 
+            text-align: center; 
+            color: #444; 
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+        }
+        h2 { 
+            font-size: 1.4rem;
+            margin-top: 2.5rem; 
+            border-bottom: 2px solid var(--border-color); 
+            padding-bottom: 0.5rem; 
+        }
+        .toolbar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin: 1.5rem 0; 
+            flex-wrap: wrap; 
+            gap: 0.75rem;
+        }
+        .search-bar { 
+            flex-grow: 1; 
+            min-width: 180px;
+            padding: 0.6rem 1rem;
+            border: 1px solid var(--border-color); 
+            border-radius: 20px; 
+            font-size: 1rem;
+        }
+        .toolbar-group { 
+            display: flex; 
+            gap: 0.5rem;
+            flex-wrap: wrap; 
+        }
         .toolbar-btn {
-            padding: 0.5rem 1rem; border: 1px solid var(--border-color); background-color: var(--bg-alt-color);
-            border-radius: 20px; cursor: pointer; transition: background-color 0.2s, color 0.2s;
+            padding: 0.5rem 1rem;
+            border: 1px solid var(--border-color); 
+            background-color: var(--bg-alt-color);
+            border-radius: 20px; 
+            cursor: pointer; 
+            transition: background-color 0.2s, color 0.2s;
+            font-size: 0.9rem;
+            white-space: nowrap;
         }
         .toolbar-btn:hover { background-color: #e9ecef; }
         #company-list, #archived-list { margin-top: 1rem; }
         .company-item {
-            background-color: var(--bg-alt-color); border: 1px solid var(--border-color);
-            border-left-width: 5px; border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s;
+            background-color: var(--bg-alt-color); 
+            border: 1px solid var(--border-color);
+            border-left-width: 5px; 
+            border-radius: 8px; 
+            margin-bottom: 1rem; 
+            transition: box-shadow 0.2s;
         }
-        .item-summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; cursor: pointer; }
-        .company-name { font-weight: bold; font-size: 1.1rem; flex-grow: 1; padding: 0.25rem; }
-        .status-select { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; min-width: 120px; }
-        .action-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; padding: 0 0.5rem; transition: color 0.2s; vertical-align: middle; }
+        .item-summary { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+            padding: 0.75rem 1rem;
+            cursor: pointer; 
+            flex-wrap: wrap; 
+        }
+        .company-name { 
+            font-weight: bold; 
+            font-size: 1.1rem;
+            flex-grow: 2;
+            min-width: 150px;
+            padding: 0.25rem; 
+        }
+        .status-select { 
+            padding: 0.5rem; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            font-size: 0.9rem; 
+            min-width: 100px;
+            flex-shrink: 0;
+            margin-left: auto;
+        }
+        .action-btn { 
+            background: none; 
+            border: none; 
+            color: #aaa; 
+            cursor: pointer; 
+            font-size: 1.2rem; 
+            padding: 0 0.25rem;
+            transition: color 0.2s; 
+            vertical-align: middle; 
+            flex-shrink: 0;
+        }
         .edit-name-btn:hover { color: var(--accent-color); }
-        .kebab-btn { font-size: 1.5rem; font-weight: bold; border-radius: 50%; width: 40px; height: 40px; }
+        .kebab-btn { 
+            font-size: 1.5rem; 
+            font-weight: bold; 
+            border-radius: 50%; 
+            width: 36px;
+            height: 36px;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 0;
+            margin-left: 0;
+            margin-right: -0.25rem;
+        }
         .kebab-btn:hover { background-color: #f0f0f0; }
-        .menu-container { position: relative; }
+        .menu-container { position: relative; flex-shrink: 0; }
         .kebab-menu {
-            display: none; position: absolute; right: 0; top: 100%; background: white;
-            border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            z-index: 10; list-style: none; padding: 0.5rem 0; margin: 0; min-width: 150px;
+            display: none; 
+            position: absolute; 
+            right: 0; 
+            top: 100%; 
+            background: white;
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10; 
+            list-style: none; 
+            padding: 0.5rem 0; 
+            margin: 0; 
+            min-width: 150px;
         }
         .kebab-menu.show { display: block; }
-        .kebab-menu button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; }
+        .kebab-menu button { 
+            display: block; 
+            width: 100%; 
+            text-align: left; 
+            padding: 0.75rem 1rem; 
+            border: none; 
+            background: none; 
+            cursor: pointer; 
+            font-size: 0.95rem;
+        }
         .kebab-menu button:hover { background-color: #f0f0f0; }
         .kebab-menu button.delete { color: var(--danger-color); }
-        .item-details { padding: 0 1rem 1rem 1rem; border-top: 1px dashed var(--border-color); margin-top: 0.5rem; }
-        .detail-grid { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }
+        .item-details { 
+            padding: 0 1rem 1rem 1rem; 
+            border-top: 1px dashed var(--border-color); 
+            margin-top: 0.5rem; 
+        }
+        .detail-grid { 
+            display: grid; 
+            gap: 1rem; 
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 600px) {
+            .detail-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
         .detail-field { display: flex; flex-direction: column; }
-        .detail-field label { font-size: 0.8rem; color: #666; margin-bottom: 0.25rem; }
-        .detail-field input { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
-        .url-field { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.5rem; }
+        .detail-field label { 
+            font-size: 0.85rem;
+            color: #666; 
+            margin-bottom: 0.25rem; 
+        }
+        .detail-field input { 
+            width: 100%; 
+            padding: 0.6rem;
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            font-size: 0.9rem;
+            box-sizing: border-box; 
+        }
+        .url-field { 
+            grid-column: 1 / -1; 
+            display: flex; 
+            align-items: center; 
+            gap: 0.5rem; 
+        }
         .url-link { font-size: 1.2rem; text-decoration: none; }
-        .add-container { text-align: center; margin-top: 1rem; }
-        #add-company-btn { background-color: var(--accent-color); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 2rem; cursor: pointer; line-height: 50px; transition: background-color 0.2s; }
+        .add-container { 
+            text-align: center; 
+            margin-top: 1rem; 
+        }
+        #add-company-btn { 
+            background-color: var(--accent-color); 
+            color: white; 
+            border: none; 
+            border-radius: 50%;
+            width: 56px;
+            height: 56px;
+            font-size: 2.2rem;
+            cursor: pointer; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.2s; 
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            line-height: 1;
+            /* ここを修正：ボタン自体を中央寄せ */
+            margin: 0 auto; 
+            display: block; /* text-align: center; で中央寄せするためにブロック要素にする */
+        }
         #add-company-btn:hover { background-color: #0056b3; }
-        #add-company-form { display: none; gap: 0.5rem; justify-content: center; align-items: center; padding: 1rem; background-color: #fff; border-radius: 8px; border: 1px solid var(--border-color); }
-        #new-company-name { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; flex-grow: 1; max-width: 400px; }
-        .form-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        #add-company-form { 
+            display: none; 
+            flex-direction: row;
+            flex-wrap: wrap;
+            gap: 0.75rem; 
+            align-items: center;
+            justify-content: center;
+            padding: 1.2rem; 
+            background-color: #fff; 
+            border-radius: 8px; 
+            border: 1px solid var(--border-color); 
+            max-width: 600px;
+            margin: 0 auto; 
+            box-sizing: border-box;
+        }
+        #new-company-name { 
+            padding: 0.75rem;
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            font-size: 1rem; 
+            flex-grow: 1; 
+            min-width: 150px;
+            box-sizing: border-box;
+        }
+        .form-btn { 
+            padding: 0.75rem 1.2rem;
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1rem;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
         .add-new-btn { background-color: var(--accent-color); color: white; }
         .cancel-add-btn { background-color: #6c757d; color: white; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        .modal-content h3 { margin-top: 0; }
-        #status-options-list { list-style: none; padding: 0; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; }
-        #status-options-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color); cursor: move; }
+        .modal-overlay { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.6);
+            display: none; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 1000; 
+        }
+        .modal-content { 
+            background: white; 
+            padding: 1.5rem;
+            border-radius: 8px; 
+            width: 90%; 
+            max-width: 450px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3); 
+            box-sizing: border-box;
+        }
+        .modal-content h3 { margin-top: 0; font-size: 1.3rem; }
+        #status-options-list { 
+            list-style: none; 
+            padding: 0; 
+            max-height: 250px; 
+            overflow-y: auto; 
+            border: 1px solid var(--border-color); 
+            border-radius: 4px; 
+            font-size: 0.95rem;
+        }
+        #status-options-list li { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 0.75rem 0.5rem;
+            border-bottom: 1px solid var(--border-color); 
+            cursor: move; 
+        }
+        #status-options-list li:last-child { border-bottom: none; }
+        #status-options-list li .delete-btn { 
+            font-size: 1.1rem; 
+            padding: 0.2rem 0.5rem;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #aaa;
+        }
         #status-options-list li .delete-btn:hover { color: var(--danger-color); }
-        #add-status-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        #add-status-form { 
+            display: flex; 
+            gap: 0.5rem; 
+            margin-top: 1rem; 
+        }
         .modal-footer { margin-top: 1.5rem; text-align: right; }
-        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column-reverse; align-items: center; }
+        #toast-container { 
+            position: fixed; 
+            bottom: 15px; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            z-index: 2000; 
+            display: flex; 
+            flex-direction: column-reverse; 
+            align-items: center; 
+            width: 90%; 
+            max-width: 350px;
+        }
         .toast {
-            background-color: rgba(0,0,0,0.75); color: white; padding: 1rem 1.5rem;
-            border-radius: 8px; margin-top: 0.5rem; opacity: 0;
+            background-color: rgba(0,0,0,0.85);
+            color: white; 
+            padding: 0.8rem 1.2rem;
+            border-radius: 8px; 
+            margin-top: 0.5rem; 
+            opacity: 0;
             animation: fadeInOut 3s forwards;
+            font-size: 0.95rem;
+            text-align: center;
         }
         @keyframes fadeInOut {
             0%, 100% { opacity: 0; transform: translateY(20px); }
@@ -93,7 +349,11 @@
         <div id="company-list"></div>
         <div class="add-container">
             <button id="add-company-btn" title="企業を追加">+</button>
-            <form id="add-company-form"><input type="text" id="new-company-name" placeholder="企業名を入力" required><button type="submit" class="form-btn add-new-btn">追加</button><button type="button" id="cancel-add-btn" class="form-btn cancel-add-btn">キャンセル</button></form>
+            <form id="add-company-form">
+                <input type="text" id="new-company-name" placeholder="企業名を入力" required>
+                <button type="submit" class="form-btn add-new-btn">追加</button>
+                <button type="button" id="cancel-add-btn" class="form-btn cancel-add-btn">キャンセル</button>
+            </form>
         </div>
         <div id="archive-section" style="display: none;">
             <h2>アーカイブ済みリスト</h2>
@@ -114,8 +374,13 @@
             <h3>選考ステータスの管理</h3>
             <p>ドラッグ＆ドロップで並び替えができます。</p>
             <ul id="status-options-list"></ul>
-            <form id="add-status-form"><input type="text" id="new-status-name" placeholder="新しいステータス名" required style="flex-grow:1; padding: 0.5rem;"><button type="submit" class="form-btn add-new-btn">追加</button></form>
-            <div class="modal-footer"><button id="close-modal-btn" class="toolbar-btn">閉じる</button></div>
+            <form id="add-status-form">
+                <input type="text" id="new-status-name" placeholder="新しいステータス名" required style="flex-grow:1; padding: 0.5rem;">
+                <button type="submit" class="form-btn add-new-btn">追加</button>
+            </form>
+            <div class="modal-footer">
+                <button id="close-modal-btn" class="toolbar-btn">閉じる</button>
+            </div>
         </div>
     </div>
     <div id="toast-container"></div>
@@ -406,7 +671,7 @@
                 newCompanyNameInput.focus();
             };
             const hideAddForm = () => {
-                addCompanyBtn.style.display = 'inline-block';
+                addCompanyBtn.style.display = 'block'; // 元のdisplayプロパティに戻す
                 addCompanyForm.style.display = 'none';
                 newCompanyNameInput.value = ''; // 入力値をクリア
             };
