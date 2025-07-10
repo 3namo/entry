@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>選考状況管理ツール</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --border-color: #ddd;
+      --bg-color: #f4f7f6;
+      --bg-alt-color: #fff;
+      --text-color: #333;
+      --accent-color: #007bff;
+      --danger-color: #e74c3c;
+    }
+    body {
+      font-family: 'Segoe UI', Meiryo, sans-serif;
+      margin: 0;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+    }
+    .container {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    h1 {
+      text-align: center;
+      color: #444;
+    }
+    .toolbar {
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+      margin: 1.5rem 0;
+    }
+    .sort-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-alt-color);
+      border-radius: 20px;
+      cursor: pointer;
+      transition: background-color 0.2s, color 0.2s;
+    }
+    .sort-btn:hover {
+      background-color: #e9ecef;
+    }
+    #company-list {
+      margin-top: 1rem;
+    }
+    .company-item {
+      background-color: var(--bg-alt-color);
+      border: 1px solid var(--border-color);
+      border-left-width: 5px; /* ステータスの色付け用 */
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      transition: box-shadow 0.2s;
+    }
+    .company-item:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    .item-summary {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem;
+      cursor: pointer;
+    }
+    .company-name {
+      font-weight: bold;
+      font-size: 1.1rem;
+      flex-grow: 1;
+    }
+    .status-select {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 0.9rem;
+      min-width: 120px;
+    }
+    .delete-btn {
+      background: none; border: none; color: #aaa; cursor: pointer;
+      font-size: 1.5rem; padding: 0 0.5rem; transition: color 0.2s;
+    }
+    .delete-btn:hover { color: var(--danger-color); }
+
+    .item-details {
+      padding: 0 1rem 1rem 1rem;
+      border-top: 1px dashed var(--border-color);
+      margin-top: 0.5rem;
+    }
+    .detail-grid {
+      display: grid;
+      gap: 1rem;
+      grid-template-columns: 1fr 1fr;
+    }
+    .detail-field { display: flex; flex-direction: column; }
+    .detail-field label { font-size: 0.8rem; color: #666; margin-bottom: 0.25rem; }
+    .detail-field input, .detail-field textarea {
+      width: 100%;
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 0.9rem;
+      box-sizing: border-box;
+    }
+    .detail-field textarea { resize: vertical; min-height: 80px; }
+    .url-field { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.5rem; }
+    .url-link { font-size: 1.2rem; text-decoration: none; }
+    
+    .add-container { text-align: center; margin-top: 1rem; }
+    #add-company-btn {
+      background-color: var(--accent-color); color: white; border: none;
+      border-radius: 50%; width: 50px; height: 50px; font-size: 2rem;
+      cursor: pointer; line-height: 50px; transition: background-color 0.2s;
+    }
+    #add-company-btn:hover { background-color: #0056b3; }
+    
+    /* --- ▼▼▼ 変更点 ▼▼▼ --- */
+    #add-company-form {
+      display: none; /* 初期状態では非表示 */
+      gap: 0.5rem;
+      justify-content: center;
+      align-items: center;
+      padding: 1rem;
+      background-color: #fff;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    #new-company-name {
+      padding: 0.5rem;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 1rem;
+      flex-grow: 1;
+      max-width: 400px;
+    }
+    .form-btn {
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .add-new-btn { background-color: var(--accent-color); color: white; }
+    .cancel-add-btn { background-color: #6c757d; color: white; }
+    /* --- ▲▲▲ 変更点 ▲▲▲ --- */
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>選考状況管理</h1>
+    <div class="toolbar">
+      <button id="sort-by-name" class="sort-btn">名前順</button>
+      <button id="sort-by-date" class="sort-btn">予定日順</button>
+    </div>
+    <div id="company-list"></div>
+    <div class="add-container">
+      <button id="add-company-btn" title="企業を追加">+</button>
+      <form id="add-company-form">
+        <input type="text" id="new-company-name" placeholder="企業名を入力" required>
+        <button type="submit" class="form-btn add-new-btn">追加</button>
+        <button type="button" id="cancel-add-btn" class="form-btn cancel-add-btn">キャンセル</button>
+      </form>
+    </div>
+    </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const companyList = document.getElementById('company-list');
+      const addCompanyBtn = document.getElementById('add-company-btn');
+      const sortByNameBtn = document.getElementById('sort-by-name');
+      const sortByDateBtn = document.getElementById('sort-by-date');
+      const STORAGE_KEY = 'myJobApplications_v2';
+      
+      // --- ▼▼▼ 変更点 ▼▼▼ ---
+      const addCompanyForm = document.getElementById('add-company-form');
+      const newCompanyNameInput = document.getElementById('new-company-name');
+      const cancelAddBtn = document.getElementById('cancel-add-btn');
+      // --- ▲▲▲ 変更点 ▲▲▲ ---
+
+      const statusOptions = ["未エントリー", "エントリー済み", "書類選考", "Webテスト","Webテスト結果待ち",  "1次面接", "2次面接", "最終面接", "内々定", "お祈り"];
+      const statusColors = {
+        "内々定": "#28a745", "最終面接": "#17a2b8", "2次面接": "#007bff",
+        "1次面接": "#007bff", "お祈り": "#6c757d", "書類選考": "#ffc107",
+      };
+
+      let companies = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+      const saveCompanies = () => localStorage.setItem(STORAGE_KEY, JSON.stringify(companies));
+
+      const renderCompanies = () => {
+        companyList.innerHTML = '';
+        if (companies.length === 0) {
+            companyList.innerHTML = '<p style="text-align:center; color:#888;">下の「+」ボタンから企業を追加してください。</p>';
+        }
+        companies.forEach(company => {
+          const companyEl = document.createElement('details');
+          companyEl.classList.add('company-item');
+          companyEl.dataset.id = company.id;
+          companyEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
+
+          const optionsHtml = statusOptions.map(o => `<option value="${o}" ${company.status === o ? 'selected' : ''}>${o}</option>`).join('');
+
+          companyEl.innerHTML = `
+            <summary class="item-summary">
+              <span class="company-name">${company.name}</span>
+              <select class="status-select">${optionsHtml}</select>
+              <button class="delete-btn" title="削除">&times;</button>
+            </summary>
+            <div class="item-details">
+              <div class="detail-grid">
+                <div class="detail-field"><label for="id-${company.id}">ID/Email</label><input type="text" id="id-${company.id}" class="login-id" placeholder="ID/Email" value="${company.loginId || ''}"></div>
+                <div class="detail-field"><label for="date-${company.id}">次回の予定日</label><input type="date" id="date-${company.id}" class="next-date" value="${company.nextDate || ''}"></div>
+                <div class="detail-field url-field"><label for="url-${company.id}" style="flex-shrink:0;">採用URL</label><input type="url" id="url-${company.id}" class="url-input" placeholder="https://..." value="${company.url || ''}"><a href="${company.url || '#'}" target="_blank" class="url-link" title="リンクを開く">🔗</a></div>
+                <div class="detail-field" style="grid-column: 1 / -1;"><label for="memo-${company.id}">メモ</label><textarea id="memo-${company.id}" class="memo-textarea" placeholder="面接の感想、次のステップなど">${company.memo || ''}</textarea></div>
+              </div>
+            </div>`;
+          companyList.appendChild(companyEl);
+        });
+      };
+
+      // --- イベントリスナー ---
+      companyList.addEventListener('change', (e) => {
+          const itemEl = e.target.closest('.company-item');
+          if (!itemEl) return;
+          const companyId = itemEl.dataset.id;
+          const company = companies.find(c => c.id == companyId);
+          if (e.target.classList.contains('status-select')) {
+              company.status = e.target.value;
+              itemEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
+          } else {
+            const propMap = { 'login-id': 'loginId', 'next-date': 'nextDate', 'url-input': 'url', 'memo-textarea': 'memo' };
+            for (const [cls, prop] of Object.entries(propMap)) {
+                if (e.target.classList.contains(cls)) {
+                    company[prop] = e.target.value;
+                    if(cls === 'url-input') { itemEl.querySelector('.url-link').href = e.target.value || '#'; }
+                    break;
+                }
+            }
+          }
+          saveCompanies();
+      });
+      companyList.addEventListener('click', (e) => {
+        if (e.target.classList.contains('delete-btn')) {
+          e.preventDefault();
+          const itemEl = e.target.closest('.company-item');
+          const id = itemEl.dataset.id;
+          const companyName = itemEl.querySelector('.company-name').textContent;
+          if (confirm(`「${companyName}」を削除しますか？`)) {
+            companies = companies.filter(c => c.id != id);
+            saveCompanies();
+            renderCompanies();
+          }
+        }
+      });
+      sortByNameBtn.addEventListener('click', () => {
+          companies.sort((a,b) => a.name.localeCompare(b.name, 'ja'));
+          renderCompanies();
+      });
+      sortByDateBtn.addEventListener('click', () => {
+          companies.sort((a,b) => {
+              if (!a.nextDate) return 1; if (!b.nextDate) return -1;
+              return new Date(a.nextDate) - new Date(b.nextDate);
+          });
+          renderCompanies();
+      });
+
+      // --- ▼▼▼ 変更点 ▼▼▼ ---
+      const showAddForm = () => {
+        addCompanyBtn.style.display = 'none';
+        addCompanyForm.style.display = 'flex';
+        newCompanyNameInput.focus();
+      };
+      const hideAddForm = () => {
+        addCompanyBtn.style.display = 'inline-block';
+        addCompanyForm.style.display = 'none';
+        newCompanyNameInput.value = '';
+      };
+
+      addCompanyBtn.addEventListener('click', showAddForm);
+      cancelAddBtn.addEventListener('click', hideAddForm);
+
+      addCompanyForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const companyName = newCompanyNameInput.value;
+        if (companyName && companyName.trim() !== '') {
+          companies.push({
+            id: Date.now(), name: companyName.trim(), loginId: '', status: statusOptions[0],
+            url: '', nextDate: '', memo: ''
+          });
+          saveCompanies();
+          renderCompanies();
+          hideAddForm();
+        }
+      });
+      // --- ▲▲▲ 変更点 ▲▲▲ ---
+
+      // 初期描画
+      renderCompanies();
+    });
+  </script>
+</body>
+</html>
