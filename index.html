@@ -1,405 +1,537 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <title>選考状況管理ツール</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
-  <style>
-    :root {
-      --border-color: #ddd; --bg-color: #f4f7f6; --bg-alt-color: #fff;
-      --text-color: #333; --accent-color: #007bff; --danger-color: #e74c3c;
-    }
-    body { font-family: 'Segoe UI', Meiryo, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); }
-    .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
-    h1, h2 { text-align: center; color: #444; }
-    h2 { font-size: 1.2rem; margin-top: 2.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0; flex-wrap: wrap; gap: 1rem; }
-    .search-bar { flex-grow: 1; min-width: 200px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 20px; }
-    .toolbar-group { display: flex; gap: 0.5rem; }
-    .toolbar-btn {
-      padding: 0.5rem 1rem; border: 1px solid var(--border-color); background-color: var(--bg-alt-color);
-      border-radius: 20px; cursor: pointer; transition: background-color 0.2s, color 0.2s;
-    }
-    .toolbar-btn:hover { background-color: #e9ecef; }
-    #company-list, #archived-list { margin-top: 1rem; }
-    .company-item {
-      background-color: var(--bg-alt-color); border: 1px solid var(--border-color);
-      border-left-width: 5px; border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s;
-    }
-    .item-summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; cursor: pointer; }
-    .company-name { font-weight: bold; font-size: 1.1rem; flex-grow: 1; padding: 0.25rem; }
-    .status-select { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; min-width: 120px; }
-    .action-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; padding: 0 0.5rem; transition: color 0.2s; vertical-align: middle; }
-    .edit-name-btn:hover { color: var(--accent-color); }
-    .kebab-btn { font-size: 1.5rem; font-weight: bold; border-radius: 50%; width: 40px; height: 40px; }
-    .kebab-btn:hover { background-color: #f0f0f0; }
-    .menu-container { position: relative; }
-    .kebab-menu {
-      display: none; position: absolute; right: 0; top: 100%; background: white;
-      border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      z-index: 10; list-style: none; padding: 0.5rem 0; margin: 0; min-width: 150px;
-    }
-    .kebab-menu.show { display: block; }
-    .kebab-menu button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; }
-    .kebab-menu button:hover { background-color: #f0f0f0; }
-    .kebab-menu button.delete { color: var(--danger-color); }
-    .item-details { padding: 0 1rem 1rem 1rem; border-top: 1px dashed var(--border-color); margin-top: 0.5rem; }
-    .detail-grid { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }
-    .detail-field { display: flex; flex-direction: column; }
-    .detail-field label { font-size: 0.8rem; color: #666; margin-bottom: 0.25rem; }
-    .detail-field input { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
-    .url-field { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.5rem; }
-    .url-link { font-size: 1.2rem; text-decoration: none; }
-    .add-container { text-align: center; margin-top: 1rem; }
-    #add-company-btn { background-color: var(--accent-color); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 2rem; cursor: pointer; line-height: 50px; transition: background-color 0.2s; }
-    #add-company-btn:hover { background-color: #0056b3; }
-    #add-company-form { display: none; gap: 0.5rem; justify-content: center; align-items: center; padding: 1rem; background-color: #fff; border-radius: 8px; border: 1px solid var(--border-color); }
-    #new-company-name { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; flex-grow: 1; max-width: 400px; }
-    .form-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-    .add-new-btn { background-color: var(--accent-color); color: white; }
-    .cancel-add-btn { background-color: #6c757d; color: white; }
-    .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-    .modal-content h3 { margin-top: 0; }
-    #status-options-list { list-style: none; padding: 0; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; }
-    #status-options-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color); cursor: move; }
-    #status-options-list li .delete-btn:hover { color: var(--danger-color); }
-    #add-status-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
-    .modal-footer { margin-top: 1.5rem; text-align: right; }
-    #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column-reverse; align-items: center; }
-    .toast {
-      background-color: rgba(0,0,0,0.75); color: white; padding: 1rem 1.5rem;
-      border-radius: 8px; margin-top: 0.5rem; opacity: 0;
-      animation: fadeInOut 3s forwards;
-    }
-    @keyframes fadeInOut {
-      0%, 100% { opacity: 0; transform: translateY(20px); }
-      10%, 90% { opacity: 1; transform: translateY(0); }
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <title>選考状況管理ツール</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+    <style>
+        :root {
+            --border-color: #ddd; --bg-color: #f4f7f6; --bg-alt-color: #fff;
+            --text-color: #333; --accent-color: #007bff; --danger-color: #e74c3c;
+        }
+        body { font-family: 'Segoe UI', Meiryo, sans-serif; margin: 0; background-color: var(--bg-color); color: var(--text-color); }
+        .container { max-width: 800px; margin: 2rem auto; padding: 0 1rem; }
+        h1, h2 { text-align: center; color: #444; }
+        h2 { font-size: 1.2rem; margin-top: 2.5rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; }
+        .toolbar { display: flex; justify-content: space-between; align-items: center; margin: 1.5rem 0; flex-wrap: wrap; gap: 1rem; }
+        .search-bar { flex-grow: 1; min-width: 200px; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 20px; }
+        .toolbar-group { display: flex; gap: 0.5rem; }
+        .toolbar-btn {
+            padding: 0.5rem 1rem; border: 1px solid var(--border-color); background-color: var(--bg-alt-color);
+            border-radius: 20px; cursor: pointer; transition: background-color 0.2s, color 0.2s;
+        }
+        .toolbar-btn:hover { background-color: #e9ecef; }
+        #company-list, #archived-list { margin-top: 1rem; }
+        .company-item {
+            background-color: var(--bg-alt-color); border: 1px solid var(--border-color);
+            border-left-width: 5px; border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s;
+        }
+        .item-summary { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; cursor: pointer; }
+        .company-name { font-weight: bold; font-size: 1.1rem; flex-grow: 1; padding: 0.25rem; }
+        .status-select { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; min-width: 120px; }
+        .action-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; padding: 0 0.5rem; transition: color 0.2s; vertical-align: middle; }
+        .edit-name-btn:hover { color: var(--accent-color); }
+        .kebab-btn { font-size: 1.5rem; font-weight: bold; border-radius: 50%; width: 40px; height: 40px; }
+        .kebab-btn:hover { background-color: #f0f0f0; }
+        .menu-container { position: relative; }
+        .kebab-menu {
+            display: none; position: absolute; right: 0; top: 100%; background: white;
+            border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 10; list-style: none; padding: 0.5rem 0; margin: 0; min-width: 150px;
+        }
+        .kebab-menu.show { display: block; }
+        .kebab-menu button { display: block; width: 100%; text-align: left; padding: 0.75rem 1rem; border: none; background: none; cursor: pointer; }
+        .kebab-menu button:hover { background-color: #f0f0f0; }
+        .kebab-menu button.delete { color: var(--danger-color); }
+        .item-details { padding: 0 1rem 1rem 1rem; border-top: 1px dashed var(--border-color); margin-top: 0.5rem; }
+        .detail-grid { display: grid; gap: 1rem; grid-template-columns: 1fr 1fr; }
+        .detail-field { display: flex; flex-direction: column; }
+        .detail-field label { font-size: 0.8rem; color: #666; margin-bottom: 0.25rem; }
+        .detail-field input { width: 100%; padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; box-sizing: border-box; }
+        .url-field { grid-column: 1 / -1; display: flex; align-items: center; gap: 0.5rem; }
+        .url-link { font-size: 1.2rem; text-decoration: none; }
+        .add-container { text-align: center; margin-top: 1rem; }
+        #add-company-btn { background-color: var(--accent-color); color: white; border: none; border-radius: 50%; width: 50px; height: 50px; font-size: 2rem; cursor: pointer; line-height: 50px; transition: background-color 0.2s; }
+        #add-company-btn:hover { background-color: #0056b3; }
+        #add-company-form { display: none; gap: 0.5rem; justify-content: center; align-items: center; padding: 1rem; background-color: #fff; border-radius: 8px; border: 1px solid var(--border-color); }
+        #new-company-name { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 1rem; flex-grow: 1; max-width: 400px; }
+        .form-btn { padding: 0.5rem 1.2rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        .add-new-btn { background-color: var(--accent-color); color: white; }
+        .cancel-add-btn { background-color: #6c757d; color: white; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 500px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .modal-content h3 { margin-top: 0; }
+        #status-options-list { list-style: none; padding: 0; max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 4px; }
+        #status-options-list li { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem; border-bottom: 1px solid var(--border-color); cursor: move; }
+        #status-options-list li .delete-btn:hover { color: var(--danger-color); }
+        #add-status-form { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .modal-footer { margin-top: 1.5rem; text-align: right; }
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 2000; display: flex; flex-direction: column-reverse; align-items: center; }
+        .toast {
+            background-color: rgba(0,0,0,0.75); color: white; padding: 1rem 1.5rem;
+            border-radius: 8px; margin-top: 0.5rem; opacity: 0;
+            animation: fadeInOut 3s forwards;
+        }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(20px); }
+            10%, 90% { opacity: 1; transform: translateY(0); }
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>選考状況管理</h1>
-    <div class="toolbar">
-      <input type="search" id="search-bar" class="search-bar" placeholder="企業名を検索...">
-      <div class="toolbar-group">
-        <button id="manage-status-btn" class="toolbar-btn">ステータス管理</button>
-        <button id="sort-by-name" class="toolbar-btn">名前順</button>
-        <button id="sort-by-date" class="toolbar-btn">予定日順</button>
-      </div>
+    <div class="container">
+        <h1>選考状況管理</h1>
+        <div class="toolbar">
+            <input type="search" id="search-bar" class="search-bar" placeholder="企業名を検索...">
+            <div class="toolbar-group">
+                <button id="manage-status-btn" class="toolbar-btn">ステータス管理</button>
+                <button id="sort-by-name" class="toolbar-btn">名前順</button>
+                <button id="sort-by-date" class="toolbar-btn">予定日順</button>
+            </div>
+        </div>
+        <div id="company-list"></div>
+        <div class="add-container">
+            <button id="add-company-btn" title="企業を追加">+</button>
+            <form id="add-company-form"><input type="text" id="new-company-name" placeholder="企業名を入力" required><button type="submit" class="form-btn add-new-btn">追加</button><button type="button" id="cancel-add-btn" class="form-btn cancel-add-btn">キャンセル</button></form>
+        </div>
+        <div id="archive-section" style="display: none;">
+            <h2>アーカイブ済みリスト</h2>
+            <div id="archived-list"></div>
+        </div>
+        <div style="text-align: center; margin: 1rem 0;">
+            <button id="toggle-archive-btn" class="toolbar-btn">アーカイブ済みリストを表示</button>
+        </div>
+        <h2>データ管理</h2>
+        <div class="toolbar">
+            <button id="export-data-btn" class="toolbar-btn">エクスポート</button>
+            <input type="file" id="import-file-input" style="display: none;">
+            <button id="import-data-btn" class="toolbar-btn">インポート</button>
+        </div>
     </div>
-    <div id="company-list"></div>
-    <div class="add-container">
-      <button id="add-company-btn" title="企業を追加">+</button>
-      <form id="add-company-form"><input type="text" id="new-company-name" placeholder="企業名を入力" required><button type="submit" class="form-btn add-new-btn">追加</button><button type="button" id="cancel-add-btn" class="form-btn cancel-add-btn">キャンセル</button></form>
+    <div class="modal-overlay" id="manage-status-modal">
+        <div class="modal-content">
+            <h3>選考ステータスの管理</h3>
+            <p>ドラッグ＆ドロップで並び替えができます。</p>
+            <ul id="status-options-list"></ul>
+            <form id="add-status-form"><input type="text" id="new-status-name" placeholder="新しいステータス名" required style="flex-grow:1; padding: 0.5rem;"><button type="submit" class="form-btn add-new-btn">追加</button></form>
+            <div class="modal-footer"><button id="close-modal-btn" class="toolbar-btn">閉じる</button></div>
+        </div>
     </div>
-    <div id="archive-section" style="display: none;">
-        <h2>アーカイブ済みリスト</h2>
-        <div id="archived-list"></div>
-    </div>
-    <div style="text-align: center; margin: 1rem 0;">
-        <button id="toggle-archive-btn" class="toolbar-btn">アーカイブ済みリストを表示</button>
-    </div>
-    <h2>データ管理</h2>
-    <div class="toolbar">
-        <button id="export-data-btn" class="toolbar-btn">エクスポート</button>
-        <input type="file" id="import-file-input" style="display: none;">
-        <button id="import-data-btn" class="toolbar-btn">インポート</button>
-    </div>
-  </div>
-  <div class="modal-overlay" id="manage-status-modal">
-    <div class="modal-content">
-      <h3>選考ステータスの管理</h3>
-      <p>ドラッグ＆ドロップで並び替えができます。</p>
-      <ul id="status-options-list"></ul>
-      <form id="add-status-form"><input type="text" id="new-status-name" placeholder="新しいステータス名" required style="flex-grow:1; padding: 0.5rem;"><button type="submit" class="form-btn add-new-btn">追加</button></form>
-      <div class="modal-footer"><button id="close-modal-btn" class="toolbar-btn">閉じる</button></div>
-    </div>
-  </div>
-  <div id="toast-container"></div>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // --- 要素取得 ---
-      const companyList = document.getElementById('company-list');
-      const archivedList = document.getElementById('archived-list');
-      const addCompanyBtn = document.getElementById('add-company-btn');
-      const sortByNameBtn = document.getElementById('sort-by-name');
-      const sortByDateBtn = document.getElementById('sort-by-date');
-      const addCompanyForm = document.getElementById('add-company-form');
-      const newCompanyNameInput = document.getElementById('new-company-name');
-      const cancelAddBtn = document.getElementById('cancel-add-btn');
-      const manageStatusBtn = document.getElementById('manage-status-btn');
-      const modal = document.getElementById('manage-status-modal');
-      const closeModalBtn = document.getElementById('close-modal-btn');
-      const statusOptionsList = document.getElementById('status-options-list');
-      const addStatusForm = document.getElementById('add-status-form');
-      const newStatusNameInput = document.getElementById('new-status-name');
-      const searchBar = document.getElementById('search-bar');
-      const archiveSection = document.getElementById('archive-section');
-      const toggleArchiveBtn = document.getElementById('toggle-archive-btn');
-      const exportBtn = document.getElementById('export-data-btn');
-      const importBtn = document.getElementById('import-data-btn');
-      const importFileInput = document.getElementById('import-file-input');
-      const toastContainer = document.getElementById('toast-container');
-
-      // --- データ管理 ---
-      const DATA_KEY = 'jobAppData_v8';
-      const defaultStatusOptions = ["未エントリー", "エントリー済み", "書類選考", "ウィンター通過", "サマー通過", "Webテスト", "1次面接前", "1次面接結果待ち", "1次面接通過", "2次面接前", "2次面接結果待ち", "2次面接通過", "最終面接前", "最終面接結果待ち", "内々定", "内定", "お祈り"];
-      const statusColors = {"内々定": "#28a745", "内定": "#28a745", "最終面接結果待ち": "#17a2b8", "最終面接前": "#17a2b8", "2次面接通過": "#007bff", "1次面接通過": "#007bff", "お祈り": "#6c757d", "書類選考": "#ffc107"};
-
-      let appData = { companies: [], statusOptions: defaultStatusOptions };
-
-      const loadData = () => {
-          const savedData = localStorage.getItem(DATA_KEY);
-          if (savedData) {
-              appData = JSON.parse(savedData);
-              if (!appData.statusOptions) {
-                  appData.statusOptions = defaultStatusOptions;
-              }
-          }
-      };
-      const saveData = () => localStorage.setItem(DATA_KEY, JSON.stringify(appData));
-
-      // --- 描画関数 ---
-      const render = () => {
-        const searchTerm = searchBar.value.toLowerCase();
-        renderCompanyList(companyList, appData.companies.filter(c => !c.archived), searchTerm);
-        renderCompanyList(archivedList, appData.companies.filter(c => c.archived), searchTerm, true);
-      };
-
-      const renderCompanyList = (listElement, companies, searchTerm, isArchived = false) => {
-        const filteredCompanies = companies.filter(c => c.name.toLowerCase().includes(searchTerm));
-        listElement.innerHTML = filteredCompanies.length === 0 ? `<p style="text-align:center; color:#888;">${searchTerm ? '該当なし' : '企業なし'}</p>` : '';
-        
-        filteredCompanies.forEach(company => {
-          const companyEl = document.createElement('details');
-          companyEl.classList.add('company-item');
-          companyEl.dataset.id = company.id;
-          companyEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
-          const optionsHtml = appData.statusOptions.map(o => `<option value="${o}" ${company.status === o ? 'selected' : ''}>${o}</option>`).join('');
-          const archiveMenuText = isArchived ? 'リストに戻す' : 'アーカイブ';
-          companyEl.innerHTML = `
-            <summary class="item-summary">
-              <span class="company-name">${company.name}</span>
-              <button class="action-btn edit-name-btn" title="名前を編集">✏️</button>
-              <select class="status-select">${optionsHtml}</select>
-              <div class="menu-container">
-                  <button class="kebab-btn action-btn" title="メニュー">⋮</button>
-                  <div class="kebab-menu">
-                      <button class="menu-item-archive">${archiveMenuText}</button>
-                      <button class="menu-item-delete delete">完全に削除</button>
-                  </div>
-              </div>
-            </summary>
-            <div class="item-details">
-              <div class="detail-grid">
-                <div class="detail-field"><label>ID/Email</label><input type="text" class="login-id" value="${company.loginId || ''}"></div>
-                <div class="detail-field"><label>一行メモ</label><input type="text" class="memo-input" value="${company.memo || ''}"></div>
-                <div class="detail-field"><label>次回の予定日</label><input type="date" class="next-date" value="${company.nextDate || ''}"></div>
-                <div class="detail-field url-field" style="grid-column: 1 / -1;"><label>採用URL</label><input type="url" class="url-input" value="${company.url || ''}"><a href="${company.url || '#'}" target="_blank" class="url-link">🔗</a></div>
-              </div>
-            </div>`;
-          listElement.appendChild(companyEl);
+    <div id="toast-container"></div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- 要素取得 ---
+            const companyList = document.getElementById('company-list');
+            const archivedList = document.getElementById('archived-list');
+            const addCompanyBtn = document.getElementById('add-company-btn');
+            const sortByNameBtn = document.getElementById('sort-by-name');
+            const sortByDateBtn = document.getElementById('sort-by-date');
+            const addCompanyForm = document.getElementById('add-company-form');
+            const newCompanyNameInput = document.getElementById('new-company-name');
+            const cancelAddBtn = document.getElementById('cancel-add-btn');
+            const manageStatusBtn = document.getElementById('manage-status-btn');
+            const modal = document.getElementById('manage-status-modal');
+            const closeModalBtn = document.getElementById('close-modal-btn');
+            const statusOptionsList = document.getElementById('status-options-list');
+            const addStatusForm = document.getElementById('add-status-form');
+            const newStatusNameInput = document.getElementById('new-status-name');
+            const searchBar = document.getElementById('search-bar');
+            const archiveSection = document.getElementById('archive-section');
+            const toggleArchiveBtn = document.getElementById('toggle-archive-btn');
+            const exportBtn = document.getElementById('export-data-btn');
+            const importBtn = document.getElementById('import-data-btn');
+            const importFileInput = document.getElementById('import-file-input');
+            const toastContainer = document.getElementById('toast-container');
+    
+            // --- データ管理 ---
+            const DATA_KEY = 'jobAppData_v8';
+            const defaultStatusOptions = ["未エントリー", "エントリー済み", "書類選考", "ウィンター通過", "サマー通過", "Webテスト", "1次面接前", "1次面接結果待ち", "1次面接通過", "2次面接前", "2次面接結果待ち", "2次面接通過", "最終面接前", "最終面接結果待ち", "内々定", "内定", "お祈り"];
+            
+            // ステータスと色のマッピングを定義
+            const statusColors = {
+                "未エントリー": "#ccc",
+                "エントリー済み": "#ccc",
+                "書類選考": "#ccc",
+                "サマー通過": "#28a745", // 緑
+                "ウィンター通過": "#28a745", // 緑
+                "内々定": "#28a745", // 緑
+                "内定": "#28a745", // 緑
+                "お祈り": "#e74c3c", // 赤
+                "Webテスト": "#87CEEB", // 薄い青
+                "1次面接前": "#87CEEB", // 薄い青
+                "1次面接結果待ち": "#87CEEB", // 薄い青
+                "2次面接前": "#87CEEB", // 薄い青
+                "2次面接結果待ち": "#87CEEB", // 薄い青
+                "最終面接前": "#87CEEB", // 薄い青
+                "最終面接結果待ち": "#87CEEB", // 薄い青
+                "1次面接通過": "#4682B4", // Steel Blue - 少し濃いめの青
+                "2次面接通過": "#1E90FF"  // Dodger Blue - より濃い青
+            };
+    
+            let appData = { companies: [], statusOptions: defaultStatusOptions };
+    
+            // ローカルストレージからデータを読み込む
+            const loadData = () => {
+                const savedData = localStorage.getItem(DATA_KEY);
+                if (savedData) {
+                    appData = JSON.parse(savedData);
+                    // 以前のバージョンでstatusOptionsがない場合に対応
+                    if (!appData.statusOptions) {
+                        appData.statusOptions = defaultStatusOptions;
+                    }
+                }
+            };
+    
+            // ローカルストレージにデータを保存する
+            const saveData = () => localStorage.setItem(DATA_KEY, JSON.stringify(appData));
+    
+            // --- 描画関数 ---
+            // 全ての企業リストを再描画する
+            const render = () => {
+                const searchTerm = searchBar.value.toLowerCase();
+                renderCompanyList(companyList, appData.companies.filter(c => !c.archived), searchTerm);
+                renderCompanyList(archivedList, appData.companies.filter(c => c.archived), searchTerm, true);
+            };
+    
+            // 特定のリスト要素（companyListまたはarchivedList）に企業を表示する
+            const renderCompanyList = (listElement, companies, searchTerm, isArchived = false) => {
+                // 検索語でフィルタリング
+                const filteredCompanies = companies.filter(c => c.name.toLowerCase().includes(searchTerm));
+                
+                // フィルタリング結果がない場合のメッセージ
+                listElement.innerHTML = filteredCompanies.length === 0 ? `<p style="text-align:center; color:#888;">${searchTerm ? '該当なし' : '企業なし'}</p>` : '';
+                
+                // 各企業アイテムを作成してリストに追加
+                filteredCompanies.forEach(company => {
+                    const companyEl = document.createElement('details');
+                    companyEl.classList.add('company-item');
+                    companyEl.dataset.id = company.id; // データセットにIDを保存
+                    companyEl.style.borderLeftColor = statusColors[company.status] || '#ccc'; // ステータスに応じた色を設定
+    
+                    // ステータス選択肢のHTMLを生成
+                    const optionsHtml = appData.statusOptions.map(o => `<option value="${o}" ${company.status === o ? 'selected' : ''}>${o}</option>`).join('');
+                    
+                    // アーカイブボタンのテキストを決定
+                    const archiveMenuText = isArchived ? 'リストに戻す' : 'アーカイブ';
+    
+                    companyEl.innerHTML = `
+                        <summary class="item-summary">
+                            <span class="company-name">${company.name}</span>
+                            <button class="action-btn edit-name-btn" title="名前を編集">✏️</button>
+                            <select class="status-select">${optionsHtml}</select>
+                            <div class="menu-container">
+                                <button class="kebab-btn action-btn" title="メニュー">⋮</button>
+                                <div class="kebab-menu">
+                                    <button class="menu-item-archive">${archiveMenuText}</button>
+                                    <button class="menu-item-delete delete">完全に削除</button>
+                                </div>
+                            </div>
+                        </summary>
+                        <div class="item-details">
+                            <div class="detail-grid">
+                                <div class="detail-field"><label>ID/Email</label><input type="text" class="login-id" value="${company.loginId || ''}"></div>
+                                <div class="detail-field"><label>一行メモ</label><input type="text" class="memo-input" value="${company.memo || ''}"></div>
+                                <div class="detail-field"><label>次回の予定日</label><input type="date" class="next-date" value="${company.nextDate || ''}"></div>
+                                <div class="detail-field url-field"><label>採用URL</label><input type="url" class="url-input" value="${company.url || ''}"><a href="${company.url || '#'}" target="_blank" class="url-link">🔗</a></div>
+                            </div>
+                        </div>`;
+                    listElement.appendChild(companyEl);
+                });
+            };
+            
+            // ステータス管理モーダル内のオプションを再描画する
+            const renderStatusOptionsInModal = () => {
+                statusOptionsList.innerHTML = '';
+                appData.statusOptions.forEach(name => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span>${name}</span><button data-name="${name}" class="delete-btn">&times;</button>`;
+                    statusOptionsList.appendChild(li);
+                });
+            };
+    
+            // トースト通知を表示する
+            const showToast = (message) => {
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.textContent = message;
+                toastContainer.appendChild(toast);
+                // 3秒後にトーストを削除
+                setTimeout(() => { toast.remove(); }, 3000);
+            };
+    
+            // 企業データの変更を処理する（ステータス、ID/Email、メモ、予定日、URL）
+            const handleCompanyDataChange = (e) => {
+                const itemEl = e.target.closest('.company-item');
+                if (!itemEl) return;
+                const company = appData.companies.find(c => c.id == itemEl.dataset.id);
+    
+                // 変更された要素のクラス名と、それに対応するcompanyオブジェクトのプロパティをマッピング
+                const propMap = {
+                    'status-select':'status',
+                    'login-id':'loginId',
+                    'next-date':'nextDate',
+                    'url-input':'url',
+                    'memo-input':'memo'
+                };
+    
+                for (const [cls, prop] of Object.entries(propMap)) {
+                    if (e.target.classList.contains(cls)) {
+                        company[prop] = e.target.value;
+                        // ステータス変更時には左ボーダーの色を更新
+                        if(cls === 'status-select') {
+                            itemEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
+                        }
+                        // URL変更時にはリンクのhrefを更新
+                        if(cls === 'url-input') {
+                            itemEl.querySelector('.url-link').href = e.target.value || '#';
+                        }
+                        break;
+                    }
+                }
+                saveData(); // データ変更を保存
+            };
+    
+            // リスト内のクリックイベントを処理する（名前編集、ケバブメニュー、アーカイブ、削除）
+            const handleListClick = (e) => {
+                const editBtn = e.target.closest('.edit-name-btn');
+                const kebabBtn = e.target.closest('.kebab-btn');
+                const menuItemArchive = e.target.closest('.menu-item-archive');
+                const menuItemDelete = e.target.closest('.menu-item-delete');
+    
+                if (editBtn) {
+                    e.preventDefault(); // デフォルトの動作（detailsの開閉）を防止
+                    const itemEl = e.target.closest('.company-item');
+                    const nameSpan = itemEl.querySelector('.company-name');
+                    const currentName = nameSpan.textContent;
+    
+                    // 名前編集用のinput要素を作成
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = currentName;
+                    input.style.cssText = 'font-weight: bold; font-size: 1.1rem; flex-grow: 1; border: 1px solid #007bff; padding: 0.25rem; border-radius: 4px;';
+                    
+                    // spanをinputに置き換える
+                    nameSpan.replaceWith(input);
+                    input.focus(); // フォーカスを当てる
+    
+                    const saveNameChange = () => {
+                        const newName = input.value.trim();
+                        if (newName && newName !== currentName) {
+                            const company = appData.companies.find(c => c.id == itemEl.dataset.id);
+                            company.name = newName;
+                            saveData(); // 名前変更を保存
+                        }
+                        render(); // リストを再描画して変更を反映
+                    };
+    
+                    input.addEventListener('blur', saveNameChange); // フォーカスが外れたら保存
+                    input.addEventListener('keydown', (event) => {
+                        if (event.key === 'Enter') {
+                            input.blur(); // Enterキーでフォーカスを外して保存
+                        } else if (event.key === 'Escape') {
+                            input.value = currentName; // Escキーで元の名前に戻してフォーカスを外す
+                            input.blur();
+                        }
+                    });
+                } else if (kebabBtn) {
+                    e.preventDefault(); // デフォルトの動作を防止
+                    const menu = kebabBtn.nextElementSibling; // ケバブメニュー要素を取得
+                    const isShown = menu.classList.contains('show');
+    
+                    // 他の開いているケバブメニューを全て閉じる
+                    document.querySelectorAll('.kebab-menu.show').forEach(m => m.classList.remove('show'));
+    
+                    // 現在のメニューを開閉する
+                    if (!isShown) {
+                        menu.classList.add('show');
+                    }
+                } else if (menuItemArchive) {
+                    const company = appData.companies.find(c => c.id == e.target.closest('.company-item').dataset.id);
+                    company.archived = !company.archived; // archived状態をトグル
+                    saveData();
+                    render(); // リストを再描画
+                    showToast(`「${company.name}」を${company.archived ? 'アーカイブしました' : 'リストに戻しました'}`);
+                } else if (menuItemDelete) {
+                    const itemEl = e.target.closest('.company-item');
+                    const id = itemEl.dataset.id;
+                    const companyName = appData.companies.find(c => c.id == id).name;
+                    if (confirm(`「${companyName}」を完全に削除しますか？この操作は元に戻せません。`)) {
+                        appData.companies = appData.companies.filter(c => c.id != id); // 該当企業を削除
+                        saveData();
+                        render(); // リストを再描画
+                        showToast(`「${companyName}」を削除しました`);
+                    }
+                }
+            };
+            
+            // --- イベントリスナー設定 ---
+            companyList.addEventListener('change', handleCompanyDataChange); // 通常リストの変更
+            archivedList.addEventListener('change', handleCompanyDataChange); // アーカイブリストの変更
+            companyList.addEventListener('click', handleListClick); // 通常リストのクリック
+            archivedList.addEventListener('click', handleListClick); // アーカイブリストのクリック
+            
+            // ケバブメニュー以外をクリックした場合にメニューを閉じる
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.menu-container')) {
+                    document.querySelectorAll('.kebab-menu.show').forEach(menu => menu.classList.remove('show'));
+                }
+            });
+    
+            // 企業追加フォームの送信処理
+            addCompanyForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const companyName = newCompanyNameInput.value.trim();
+                if (companyName) {
+                    appData.companies.push({ 
+                        id: Date.now(), // ユニークなIDを生成
+                        name: companyName,
+                        loginId: '', 
+                        status: appData.statusOptions[0], // デフォルトステータスを設定
+                        url: '',
+                        nextDate: '', 
+                        memo: '',
+                        archived: false // 初期状態ではアーカイブされていない
+                    });
+                    saveData();
+                    render();
+                    hideAddForm(); // フォームを非表示に戻す
+                }
+            });
+    
+            // 企業追加フォームの表示・非表示を切り替えるヘルパー関数
+            const showAddForm = () => {
+                addCompanyBtn.style.display = 'none';
+                addCompanyForm.style.display = 'flex';
+                newCompanyNameInput.focus();
+            };
+            const hideAddForm = () => {
+                addCompanyBtn.style.display = 'inline-block';
+                addCompanyForm.style.display = 'none';
+                newCompanyNameInput.value = ''; // 入力値をクリア
+            };
+            addCompanyBtn.addEventListener('click', showAddForm); // 追加ボタンでフォーム表示
+            cancelAddBtn.addEventListener('click', hideAddForm); // キャンセルボタンでフォーム非表示
+    
+            // 名前順ソートボタン
+            sortByNameBtn.addEventListener('click', () => {
+                appData.companies.sort((a,b) => a.name.localeCompare(b.name, 'ja'));
+                render();
+            });
+    
+            // 予定日順ソートボタン
+            sortByDateBtn.addEventListener('click', () => {
+                appData.companies.sort((a,b) => {
+                    if (!a.nextDate) return 1; // 日付がないものは後ろに
+                    if (!b.nextDate) return -1; // 日付がないものは後ろに
+                    return new Date(a.nextDate) - new Date(b.nextDate); // 日付でソート
+                });
+                render();
+            });
+    
+            // ステータス管理モーダルの表示
+            manageStatusBtn.addEventListener('click', () => {
+                renderStatusOptionsInModal(); // モーダル内のステータスオプションを最新の状態にする
+                modal.style.display = 'flex'; // モーダルを表示
+            });
+    
+            // モーダルの閉じるボタン
+            closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
+    
+            // モーダルのオーバーレイをクリックした場合に閉じる
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+    
+            // 新しいステータス追加フォームの送信処理
+            addStatusForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const newName = newStatusNameInput.value.trim();
+                if (newName && !appData.statusOptions.includes(newName)) { // 重複チェック
+                    appData.statusOptions.push(newName); // ステータスを追加
+                    saveData();
+                    renderStatusOptionsInModal(); // モーダル内の表示を更新
+                    render(); // メインリストの表示も更新
+                    newStatusNameInput.value = ''; // 入力値をクリア
+                }
+            });
+    
+            // ステータスオプションリストのクリックイベント（削除ボタン）
+            statusOptionsList.addEventListener('click', (e) => {
+                if (e.target.closest('.delete-btn')) {
+                    const statusToDelete = e.target.closest('.delete-btn').dataset.name;
+                    if (confirm(`ステータス「${statusToDelete}」を削除しますか？`)) {
+                        appData.statusOptions = appData.statusOptions.filter(name => name !== statusToDelete); // 該当ステータスを削除
+                        saveData();
+                        renderStatusOptionsInModal(); // モーダル内の表示を更新
+                        render(); // メインリストの表示も更新
+                    }
+                }
+            });
+    
+            // Sortable.jsによるステータスオプションの並び替え機能
+            new Sortable(statusOptionsList, {
+                animation: 150,
+                onEnd: (evt) => {
+                    const [movedItem] = appData.statusOptions.splice(evt.oldIndex, 1); // 移動元から削除
+                    appData.statusOptions.splice(evt.newIndex, 0, movedItem); // 移動先に挿入
+                    saveData();
+                    render(); // 並び替えを反映するため再描画
+                }
+            });
+    
+            // 検索バーの入力イベント
+            searchBar.addEventListener('input', render);
+    
+            // アーカイブリストの表示/非表示トグルボタン
+            toggleArchiveBtn.addEventListener('click', () => {
+                const isHidden = archiveSection.style.display === 'none';
+                archiveSection.style.display = isHidden ? 'block' : 'none';
+                toggleArchiveBtn.textContent = isHidden ? 'アーカイブを隠す' : 'アーカイブ済みリストを表示';
+            });
+    
+            // データエクスポートボタン
+            exportBtn.addEventListener('click', () => {
+                const dataStr = JSON.stringify(appData, null, 2); // データをJSON文字列に変換（整形して可読性向上）
+                const blob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `job-applications-backup-${new Date().toISOString().slice(0,10)}.json`; // ファイル名を生成
+                a.click();
+                URL.revokeObjectURL(url); // URLを解放
+            });
+    
+            // データインポートボタン
+            importBtn.addEventListener('click', () => importFileInput.click()); // 隠れているファイル入力要素をクリック
+            importFileInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (!file) return;
+    
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    try {
+                        const importedData = JSON.parse(event.target.result); // 読み込んだJSONをパース
+                        if (confirm('現在のデータをインポートしたデータで上書きしますか？この操作は元に戻せません。')) {
+                            appData = importedData; // データを上書き
+                            saveData();
+                            render(); // 再描画
+                            alert('データのインポートが完了しました。');
+                        }
+                    } catch (err) {
+                        alert('ファイルの読み込みに失敗しました。有効なJSONファイルを選択してください。');
+                    }
+                };
+                reader.readAsText(file); // ファイルをテキストとして読み込む
+                importFileInput.value = ''; // 同じファイルを再度選択できるようにクリア
+            });
+    
+            // --- 初期化処理 ---
+            loadData(); // ページ読み込み時にデータをロード
+            render();   // 企業リストを初期描画
         });
-      };
-      
-      const renderStatusOptionsInModal = () => {
-          statusOptionsList.innerHTML = '';
-          appData.statusOptions.forEach(name => {
-              const li = document.createElement('li');
-              li.innerHTML = `<span>${name}</span><button data-name="${name}" class="delete-btn">&times;</button>`;
-              statusOptionsList.appendChild(li);
-          });
-      };
-
-      const showToast = (message) => {
-          const toast = document.createElement('div');
-          toast.className = 'toast';
-          toast.textContent = message;
-          toastContainer.appendChild(toast);
-          setTimeout(() => { toast.remove(); }, 3000);
-      };
-
-      const handleCompanyDataChange = (e) => {
-          const itemEl = e.target.closest('.company-item');
-          if (!itemEl) return;
-          const company = appData.companies.find(c => c.id == itemEl.dataset.id);
-          const propMap = {'status-select':'status', 'login-id':'loginId', 'next-date':'nextDate', 'url-input':'url', 'memo-input':'memo'};
-          for (const [cls, prop] of Object.entries(propMap)) {
-              if (e.target.classList.contains(cls)) {
-                  company[prop] = e.target.value;
-                  if(cls === 'status-select') itemEl.style.borderLeftColor = statusColors[company.status] || '#ccc';
-                  if(cls === 'url-input') itemEl.querySelector('.url-link').href = e.target.value || '#';
-                  break;
-              }
-          }
-          saveData();
-      };
-
-      const handleListClick = (e) => {
-          const editBtn = e.target.closest('.edit-name-btn');
-          const kebabBtn = e.target.closest('.kebab-btn');
-          const menuItemArchive = e.target.closest('.menu-item-archive');
-          const menuItemDelete = e.target.closest('.menu-item-delete');
-
-          if (editBtn) {
-              e.preventDefault();
-              const itemEl = e.target.closest('.company-item');
-              const nameSpan = itemEl.querySelector('.company-name');
-              const currentName = nameSpan.textContent;
-              const input = document.createElement('input');
-              input.type = 'text'; input.value = currentName;
-              input.style.cssText = 'font-weight: bold; font-size: 1.1rem; flex-grow: 1; border: 1px solid #007bff; padding: 0.25rem; border-radius: 4px;';
-              nameSpan.replaceWith(input);
-              input.focus();
-              const saveNameChange = () => {
-                  const newName = input.value.trim();
-                  if (newName && newName !== currentName) {
-                      const company = appData.companies.find(c => c.id == itemEl.dataset.id);
-                      company.name = newName;
-                      saveData();
-                  }
-                  render();
-              };
-              input.addEventListener('blur', saveNameChange);
-              input.addEventListener('keydown', (event) => {
-                  if (event.key === 'Enter') input.blur();
-                  else if (event.key === 'Escape') { input.value = currentName; input.blur(); }
-              });
-          } else if (kebabBtn) {
-              e.preventDefault();
-              const menu = kebabBtn.nextElementSibling;
-              const isShown = menu.classList.contains('show');
-              document.querySelectorAll('.kebab-menu.show').forEach(m => m.classList.remove('show'));
-              if (!isShown) menu.classList.add('show');
-          } else if (menuItemArchive) {
-              const company = appData.companies.find(c => c.id == e.target.closest('.company-item').dataset.id);
-              company.archived = !company.archived;
-              saveData();
-              render();
-              showToast(`「${company.name}」を${company.archived ? 'アーカイブしました' : 'リストに戻しました'}`);
-          } else if (menuItemDelete) {
-              const itemEl = e.target.closest('.company-item');
-              const id = itemEl.dataset.id;
-              const companyName = appData.companies.find(c => c.id == id).name;
-              if (confirm(`「${companyName}」を完全に削除しますか？この操作は元に戻せません。`)) {
-                  appData.companies = appData.companies.filter(c => c.id != id);
-                  saveData();
-                  render();
-                  showToast(`「${companyName}」を削除しました`);
-              }
-          }
-      };
-      
-      // --- イベントリスナー設定 ---
-      companyList.addEventListener('change', handleCompanyDataChange);
-      archivedList.addEventListener('change', handleCompanyDataChange);
-      companyList.addEventListener('click', handleListClick);
-      archivedList.addEventListener('click', handleListClick);
-      document.addEventListener('click', (e) => {
-          if (!e.target.closest('.menu-container')) {
-              document.querySelectorAll('.kebab-menu.show').forEach(menu => menu.classList.remove('show'));
-          }
-      });
-      addCompanyForm.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const companyName = newCompanyNameInput.value.trim();
-        if (companyName) {
-          appData.companies.push({ 
-              id: Date.now(), name: companyName, loginId: '', 
-              status: appData.statusOptions[0], url: '', nextDate: '', 
-              memo: '', archived: false
-          });
-          saveData();
-          render();
-          hideAddForm();
-        }
-      });
-      const showAddForm = () => { addCompanyBtn.style.display = 'none'; addCompanyForm.style.display = 'flex'; newCompanyNameInput.focus(); };
-      const hideAddForm = () => { addCompanyBtn.style.display = 'inline-block'; addCompanyForm.style.display = 'none'; newCompanyNameInput.value = ''; };
-      addCompanyBtn.addEventListener('click', showAddForm);
-      cancelAddBtn.addEventListener('click', hideAddForm);
-      sortByNameBtn.addEventListener('click', () => { appData.companies.sort((a,b) => a.name.localeCompare(b.name, 'ja')); render(); });
-      sortByDateBtn.addEventListener('click', () => { appData.companies.sort((a,b) => { if (!a.nextDate) return 1; if (!b.nextDate) return -1; return new Date(a.nextDate) - new Date(b.nextDate); }); render(); });
-      manageStatusBtn.addEventListener('click', () => { renderStatusOptionsInModal(); modal.style.display = 'flex'; });
-      closeModalBtn.addEventListener('click', () => modal.style.display = 'none');
-      modal.addEventListener('click', (e) => { if (e.target === modal) modal.style.display = 'none'; });
-      addStatusForm.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const newName = newStatusNameInput.value.trim();
-          if (newName && !appData.statusOptions.includes(newName)) {
-              appData.statusOptions.push(newName);
-              saveData();
-              renderStatusOptionsInModal();
-              render();
-              newStatusNameInput.value = '';
-          }
-      });
-      statusOptionsList.addEventListener('click', (e) => {
-          if (e.target.closest('.delete-btn')) {
-              const statusToDelete = e.target.closest('.delete-btn').dataset.name;
-              if (confirm(`ステータス「${statusToDelete}」を削除しますか？`)) {
-                  appData.statusOptions = appData.statusOptions.filter(name => name !== statusToDelete);
-                  saveData();
-                  renderStatusOptionsInModal();
-                  render();
-              }
-          }
-      });
-      new Sortable(statusOptionsList, {
-          animation: 150,
-          onEnd: (evt) => {
-              const [movedItem] = appData.statusOptions.splice(evt.oldIndex, 1);
-              appData.statusOptions.splice(evt.newIndex, 0, movedItem);
-              saveData();
-              render();
-          }
-      });
-      searchBar.addEventListener('input', render);
-      toggleArchiveBtn.addEventListener('click', () => {
-          const isHidden = archiveSection.style.display === 'none';
-          archiveSection.style.display = isHidden ? 'block' : 'none';
-          toggleArchiveBtn.textContent = isHidden ? 'アーカイブを隠す' : 'アーカイブ済みリストを表示';
-      });
-      exportBtn.addEventListener('click', () => {
-          const dataStr = JSON.stringify(appData, null, 2);
-          const blob = new Blob([dataStr], {type: 'application/json'});
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `job-applications-backup-${new Date().toISOString().slice(0,10)}.json`;
-          a.click();
-          URL.revokeObjectURL(url);
-      });
-      importBtn.addEventListener('click', () => importFileInput.click());
-      importFileInput.addEventListener('change', (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = (event) => {
-              try {
-                  const importedData = JSON.parse(event.target.result);
-                  if (confirm('現在のデータをインポートしたデータで上書きしますか？この操作は元に戻せません。')) {
-                      appData = importedData;
-                      saveData();
-                      render();
-                      alert('データのインポートが完了しました。');
-                  }
-              } catch (err) {
-                  alert('ファイルの読み込みに失敗しました。有効なJSONファイルを選択してください。');
-              }
-          };
-          reader.readAsText(file);
-          importFileInput.value = '';
-      });
-
-      // --- 初期化処理 ---
-      loadData();
-      render();
-    });
-  </script>
+    </script>
 </body>
 </html>
