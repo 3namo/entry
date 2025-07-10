@@ -105,7 +105,7 @@
       const COMPANY_KEY = 'myJobApplications_v4';
       const STATUS_KEY = 'jobApp_statusOptions_v4';
 
-      const defaultStatusOptions = ["未エントリー", "エントリー済み", "書類選考", "Webテスト", "サマー通過", "ウィンター通過", "1次面接", "2次面接", "最終面接", "内々定", "お祈り"];
+      const defaultStatusOptions = ["未エントリー", "エントリー済み", "書類選考", "Webテスト", "サマー通過", "ウィンター通過", "1次面接前", "1次面接通過", "2次面接前", "2次面接通過", "最終面接前", "最終面接通過", "内々定", "内定", "お祈り"];
       const statusColors = {"内々定": "#28a745", "最終面接": "#17a2b8", "2次面接": "#007bff", "1次面接": "#007bff", "お祈り": "#6c757d", "書類選考": "#ffc107"};
 
       let companies = JSON.parse(localStorage.getItem(COMPANY_KEY)) || [];
