@@ -29,11 +29,14 @@
       border-left-width: 5px; border-radius: 8px; margin-bottom: 1rem; transition: box-shadow 0.2s;
     }
     .company-item:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .item-summary { display: flex; align-items: center; gap: 1rem; padding: 1rem; }
-    .company-name { font-weight: bold; font-size: 1.1rem; flex-grow: 1; cursor: pointer; padding: 0.25rem; border-radius: 4px; }
-    .company-name:hover { background-color: #f0f0f0; }
+    .item-summary { display: flex; align-items: center; gap: 1rem; padding: 1rem; cursor: pointer; }
+    .company-name {
+        font-weight: bold; font-size: 1.1rem; flex-grow: 1;
+        padding: 0.25rem;
+    }
     .status-select { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; min-width: 120px; }
     .action-btn { background: none; border: none; color: #aaa; cursor: pointer; font-size: 1.2rem; padding: 0 0.5rem; transition: color 0.2s; }
+    .edit-name-btn:hover { color: var(--accent-color); } /* 変更点 */
     .archive-btn:hover { color: var(--archive-color); }
     .delete-btn:hover { color: var(--danger-color); }
     .item-details { padding: 0 1rem 1rem 1rem; border-top: 1px dashed var(--border-color); margin-top: 0.5rem; }
@@ -107,6 +110,7 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       const companyList = document.getElementById('company-list');
+      const archivedList = document.getElementById('archived-list');
       const addCompanyBtn = document.getElementById('add-company-btn');
       const sortByNameBtn = document.getElementById('sort-by-name');
       const sortByDateBtn = document.getElementById('sort-by-date');
@@ -121,7 +125,6 @@
       const newStatusNameInput = document.getElementById('new-status-name');
       const searchBar = document.getElementById('search-bar');
       const archiveSection = document.getElementById('archive-section');
-      const archivedList = document.getElementById('archived-list');
       const toggleArchiveBtn = document.getElementById('toggle-archive-btn');
       const exportBtn = document.getElementById('export-data-btn');
       const importBtn = document.getElementById('import-data-btn');
@@ -132,16 +135,11 @@
       const defaultStatusOptions = ["未エントリー", "エントリー済み", "書類選考", "ウィンター通過", "サマー通過", "Webテスト", "1次面接前", "1次面接結果待ち", "1次面接通過", "2次面接前", "2次面接結果待ち", "2次面接通過", "最終面接前", "最終面接結果待ち", "内々定", "内定", "お祈り"];
       const statusColors = {"内々定": "#28a745", "内定": "#28a745", "最終面接結果待ち": "#17a2b8", "最終面接前": "#17a2b8", "2次面接通過": "#007bff", "1次面接通過": "#007bff", "お祈り": "#6c757d", "書類選考": "#ffc107"};
 
-      let appData = {
-          companies: [],
-          statusOptions: defaultStatusOptions
-      };
+      let appData = { companies: [], statusOptions: defaultStatusOptions };
 
       const loadData = () => {
           const savedData = localStorage.getItem(DATA_KEY);
-          if (savedData) {
-              appData = JSON.parse(savedData);
-          }
+          if (savedData) { appData = JSON.parse(savedData); }
       };
 
       const saveData = () => {
@@ -150,11 +148,8 @@
 
       const render = () => {
         const searchTerm = searchBar.value.toLowerCase();
-        const activeCompanies = appData.companies.filter(c => !c.archived);
-        const archivedCompanies = appData.companies.filter(c => c.archived);
-
-        renderCompanyList(companyList, activeCompanies, searchTerm);
-        renderCompanyList(archivedList, archivedCompanies, searchTerm, true);
+        renderCompanyList(companyList, appData.companies.filter(c => !c.archived), searchTerm);
+        renderCompanyList(archivedList, appData.companies.filter(c => c.archived), searchTerm, true);
       };
 
       const renderCompanyList = (listElement, companies, searchTerm, isArchived = false) => {
@@ -172,9 +167,11 @@
             ? `<button class="action-btn archive-btn" title="リストに戻す">↩️</button>`
             : `<button class="action-btn archive-btn" title="アーカイブ">🗄️</button>`;
 
+          // ▼▼▼ 変更点: 編集ボタンを追加 ▼▼▼
           companyEl.innerHTML = `
             <summary class="item-summary">
               <span class="company-name">${company.name}</span>
+              <button class="action-btn edit-name-btn" title="名前を編集">✏️</button>
               <select class="status-select">${optionsHtml}</select>
               ${archiveButtonHtml}
               <button class="action-btn delete-btn" title="完全に削除">&times;</button>
@@ -187,6 +184,7 @@
                 <div class="detail-field url-field" style="grid-column: 1 / -1;"><label>採用URL</label><input type="url" class="url-input" value="${company.url || ''}"><a href="${company.url || '#'}" target="_blank" class="url-link">🔗</a></div>
               </div>
             </div>`;
+          // ▲▲▲ 変更点 ▲▲▲
           listElement.appendChild(companyEl);
         });
       };
@@ -221,8 +219,10 @@
       companyList.addEventListener('click', handleCompanyAction);
       archivedList.addEventListener('click', handleCompanyAction);
       function handleCompanyAction(e) {
-        if (e.target.classList.contains('company-name')) {
-            const nameSpan = e.target;
+        // ▼▼▼ 変更点: 編集ボタンのクリックを検知 ▼▼▼
+        if (e.target.classList.contains('edit-name-btn')) {
+            e.preventDefault(); // summaryの開閉をキャンセル
+            const nameSpan = e.target.previousElementSibling;
             const currentName = nameSpan.textContent;
             const input = document.createElement('input');
             input.type = 'text'; input.value = currentName;
@@ -244,6 +244,7 @@
                 else if (event.key === 'Escape') { input.value = currentName; input.blur(); }
             });
         }
+        // ▲▲▲ 変更点 ▲▲▲
         if (e.target.classList.contains('archive-btn')) {
             const company = appData.companies.find(c => c.id == e.target.closest('.company-item').dataset.id);
             company.archived = !company.archived;
@@ -292,8 +293,8 @@
               saveData();
               renderStatusOptionsInModal();
               render();
+              newStatusNameInput.value = '';
           }
-          newStatusNameInput.value = '';
       });
       statusOptionsList.addEventListener('click', (e) => {
           if (e.target.classList.contains('delete-btn')) {
@@ -353,7 +354,7 @@
               }
           };
           reader.readAsText(file);
-          importFileInput.value = ''; // 同じファイルを再度選択できるようにリセット
+          importFileInput.value = '';
       });
 
       loadData();
